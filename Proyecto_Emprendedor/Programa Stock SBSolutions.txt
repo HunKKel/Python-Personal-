@@ -1,0 +1,14 @@
+#Este programa consistirá en un software genérico de almacenamiento de stock.
+
+#El mismo contará con 2 menúes principales:
+
+# 1- Administración   |   2- Stock
+
+#En administración se podrá agregar, modificar y eliminar productos al stock. Además, podremos asignar los distintos proveedores de nuestros productos, agregar nuevos, etc.
+
+#En stock podremos visualizar los productos en stock, sus nombres, su código de identificación, la cantidad disponible y su proveedor.
+
+import pickle
+import os
+import os.path
+import sys

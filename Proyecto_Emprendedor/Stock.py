@@ -62,12 +62,14 @@ import os.path
 import sys
 import io
 import string
+
+
 tm=50
 class PRODUCTO:
 	def __init__(self):
 		self.cod = "0".rjust(8, "0")
 		self.nombre = " ".ljust(12, " ")
-		self.precio = "0".rjust(8, "0")
+		self.precio = "0.00".rjust(8, "0")
 		self.codProveedor = "0".rjust(8, "0")
 		self.stock = "0".rjust(8, "0")
 		self.cantMax = "0".rjust(8, "0")
@@ -84,11 +86,14 @@ class PROVEEDOR:
 		self.calle = " ".ljust(20, " ")
 		self.numCalle = "0".rjust(4, "0")
 		self.Estado = " ".ljust(5, " ")
+
+
 afprov = "ProveedoresARCHIVO.dat"
 afprod = "ProductosARCHIVO.dat"
 tmprov = 254
-tmprod = 196	
-#Funcion borrar adaptada para SO linux, windows y apple
+tmprod = 196
+
+#Funcion borrar adaptada para SO Linux, Windows y Apple
 def Borrar():
 	if os.name == "posix":
 		os.system ("clear")
@@ -188,8 +193,8 @@ def ModProveedor(prov):
 		prov.numCalle = aux
 	else:
 		print()
-#Módulo correspondiente a la variable que ingresa el usuario para elegír la opción a la que quiere ingresar del menú principal
 
+#Módulo correspondiente a la variable que ingresa el usuario para elegír la opción a la que quiere ingresar del menú principal
 def opcion():
 	global op
 	op = input("Ingrese el número de la opción a la que desee acceder: ")
@@ -206,7 +211,6 @@ def opcion():
 		op = int(input("Ingrese el número de la opción a la que desee acceder: "))
 
 #Módulo que permite elegir las distintas opciones del módulo "Proveedores".
-
 def opcion1():
 	global op1
 	op1 = input("Ingrese el número de la opción a la que desee acceder: ")
@@ -236,6 +240,7 @@ def AgregProv():
 				prov.nombre = aux.ljust(12)
 				#hacer validaciones
 				CargaProveedor(prov)
+				prov.Estado = "True "
 				prov.cod = str(os.path.getsize(afprov)//tmprov + 2).rjust(8, "0")
 				pickle.dump(prov,alprov)
 				alprov.flush()
@@ -275,6 +280,7 @@ def VerProv():
 			prov = pickle.load(alprov)
 			print("|",prov.cod.center(8," "),"|",prov.nombre.strip().center(15," "),"|",prov.mail.strip().center(42," "),"|",prov.telefono.center(12," "),"|")
 		print("|".ljust(90,"_"),"|")
+
 #2do Módulo del menú "Proveedores". Permite al usuario modificar datos de los proveedores registrados en el sistema.
 def ModifProv():
 	if os.path.getsize(afprov) > 0:
@@ -338,8 +344,6 @@ def ModifProv():
 					VerProv()
 					print("|","Proveedor modificado exitosamente".center(88),"|")
 					seguir = input("| ¿Desea modificar otro proveedor? (S/N) ").upper()
-
-
 	else:	
 		Borrar()
 		print("","_".ljust(90,"_"))
@@ -445,7 +449,6 @@ def buscarNomProd(x):
 			return -1
 
 #Módulo en el que se ingresa y valida el precio de un producto. Utilizado en la función "Agregar Producto" del menú "Productos".
-
 def ingresaPrecioProducto():
 	global precio
 	precio = input("Ingrese el precio del producto a registrar (en pesos [ARS]): ")
@@ -456,14 +459,14 @@ def ingresaPrecioProducto():
 		input("Presione [Enter] para continuar...")
 		Borrar()
 		precio = input("Ingrese el precio del producto a registrar (en pesos [ARS]): ")
-	precio = int(precio)
-	while precio<=0:
+	precio = float(precio)
+	while precio<=0.00:
 		print()
 		print("Error. Ingrese valores mayores que 0.")
 		print()
 		input("Presione [Enter] para continuar...")
 		Borrar()
-		precio = int(input("Ingrese el precio del producto a registrar (en pesos [ARS]): "))
+		precio = float(input("Ingrese el precio del producto a registrar (en pesos [ARS]): "))
 	precio = str(precio)
 	precio = precio.rjust(8, "0")
 
@@ -541,7 +544,8 @@ def AgregProd():
 			if buscarNomProd(nomProd) == -1:
 				#Si no hay productos ingresados, el código del primer producto será 1.
 				if os.path.getsize(afprod) == 0:
-					codProd = 1
+					codProd = "1"
+					codProd = codProd.rjust(8, "0")
 				#Si ya hay 1 o más productos registrados, el sistema otorgará como código el número que le sigue al último producto del registro
 				else:
 					alprod.seek(0,0)
@@ -569,8 +573,40 @@ def AgregProd():
 				print("Producto registrado con éxito...")
 			#En este caso, el producto ya se encuentra registrado. En consecuencia, muestra una advertencia al usuario.
 			else:
-				print()
-				print("El producto ya se encuentra registrado...")
+				alprod.seek(puntProd, 0)
+				Prod = pickle.load(alprod)
+				if Prod.Estado == "False":
+					print()
+					print("El producto fue dado de baja anteriormente. ¿Desea restaurarlo en el sistema?")
+					res = input('(S | N): ')
+					res = res.upper()
+					while res != 'S' and res != 'N':
+						print()
+						print("Error. Ingrese [S] o [N] para continuar...")
+						print()
+						input('Presione [Enter] para continuar...')
+						Borrar()
+						print("Agregar Producto")
+						print()
+						print()
+						print("Ingrese el nombre del producto que desea registrar (Máximo 12 caracteres) - (Ingrese [**] para finalizar): ")
+						print()
+						print("El producto fue dado de baja anteriormente. ¿Desea restaurarlo en el sistema?")
+						res = input('(S | N): ')
+						res = res.upper()
+					if res == 'S':
+						Prod.Estado = "True "
+						alprod.seek(puntProd, 0)
+						pickle.dump(Prod, alprod)
+						alprod.flush()
+						print()
+						print("Producto restaurado en el sistema con éxito. Para realizar las modificaciones pertinentes, diríjase a la función [Modificar Producto].")
+					else:
+						print()
+						print("Operación cancelada con éxito...")
+				else:
+					print()
+					print("El producto ya se encuentra registrado...")
 			print()
 			input("Presione [Enter] para continuar...")
 			Borrar()
@@ -787,6 +823,8 @@ def modifPrecioProd(x):
 		print()
 		newPrice = int(input("Ingrese el nuevo precio del producto (En pesos [ARS]) - (Ingrese [0] para finalizar): "))
 	while newPrice != 0:
+		newPrice = str(newPrice)
+		newPrice = newPrice.rjust(8, "0")
 		print()
 		print("¿Está seguro de que desea modificar el precio del producto [", x.nombre, "] de [", x.precio, "] ARS a [", newPrice, "] ARS?")
 		res = input("(S | N): ")
@@ -870,8 +908,7 @@ def ModifProd():
 			pantallaProd()
 			print()
 			codProd = input("Ingrese el código del producto que desea modificar (Ingrese [0] para volver al menú anterior): ")
-		codProd = int(codProd)
-		while buscarCodProd(codProd) == -1 and codProd != 0:
+		while buscarCodProd(codProd) == -1 and codProd != "0":
 			print()
 			print("El código del producto ingresado no se encuentra registrado. Inténtelo nuevamente...")
 			print()
@@ -882,8 +919,8 @@ def ModifProd():
 			print()
 			pantallaProd()
 			print()
-			codProd = int(input("Ingrese el código del producto que desea modificar (Ingrese [0] para volver al menú anterior): "))
-		while codProd != 0:
+			codProd = input("Ingrese el código del producto que desea modificar (Ingrese [0] para volver al menú anterior): ")
+		while codProd != "0":
 			alprod.seek(puntProd,0)
 			Prod = pickle.load(alprod)
 			Borrar()
@@ -940,8 +977,7 @@ def ModifProd():
 				pantallaProd()
 				print()
 				codProd = input("Ingrese el código del producto que desea modificar (Ingrese [0] para volver al menú anterior): ")
-			codProd = int(codProd)
-			while buscarCodProd(codProd) == -1 and codProd != 0:
+			while buscarCodProd(codProd) == -1 and codProd != "0":
 				print()
 				print("El código del producto ingresado no se encuentra registrado. Inténtelo nuevamente...")
 				print()
@@ -952,7 +988,7 @@ def ModifProd():
 				print()
 				pantallaProd()
 				print()
-				codProd = int(input("Ingrese el código del producto que desea modificar (Ingrese [0] para volver al menú anterior): "))
+				codProd = input("Ingrese el código del producto que desea modificar (Ingrese [0] para volver al menú anterior): ")
 
 #3er Módulo del menú "Productos". Elimina los productos indicados por el usuario. Pueden ser recuperados haciendo uso de la opción "Agregar Producto" del menú "Productos".
 def ElimProd():
@@ -967,7 +1003,7 @@ def ElimProd():
 	else:
 		pantallaProd()
 		print()
-		codProd = input("Ingrese el código del producto que desea eliminar (Ingrese 0 para volver al menú anterior): ")
+		codProd = input("Ingrese el código del producto que desea eliminar (Ingrese [0] para volver al menú anterior): ")
 		while codProd.isdigit()==False:
 			print()
 			print("Error. El dato ingresado no es un número. Inténtelo nuevamente...")
@@ -979,9 +1015,8 @@ def ElimProd():
 			print()
 			pantallaProd()
 			print()
-			codProd = input("Ingrese el código del producto que desea eliminar (Ingrese 0 para volver al menú anterior): ")
-		codProd = int(codProd)
-		while buscarCodProd(codProd) == -1 and codProd != 0:
+			codProd = input("Ingrese el código del producto que desea eliminar (Ingrese [0] para volver al menú anterior): ")
+		while buscarCodProd(codProd) == -1 and codProd != "0":
 			print()
 			print("El código del producto ingresado no se encuentra registrado. Inténtelo nuevamente...")
 			print()
@@ -992,8 +1027,8 @@ def ElimProd():
 			print()
 			pantallaProd()
 			print()
-			codProd = int(input("Ingrese el código del producto que desea eliminar (Ingrese 0 para volver al menú anterior): "))
-		while codProd != 0:
+			codProd = input("Ingrese el código del producto que desea eliminar (Ingrese [0] para volver al menú anterior): ")
+		while codProd != "0":
 			alprod.seek(puntProd,0)
 			Prod = pickle.load(alprod)
 			Borrar()
@@ -1033,7 +1068,7 @@ def ElimProd():
 			print()
 			pantallaProd()
 			print()
-			codProd = input("Ingrese el código del producto que desea eliminar (Ingrese 0 para volver al menú anterior): ")
+			codProd = input("Ingrese el código del producto que desea eliminar (Ingrese [0] para volver al menú anterior): ")
 			while codProd.isdigit()==False:
 				print()
 				print("Error. El dato ingresado no es un número. Inténtelo nuevamente...")
@@ -1045,9 +1080,8 @@ def ElimProd():
 				print()
 				pantallaProd()
 				print()
-				codProd = input("Ingrese el código del producto que desea eliminar (Ingrese 0 para volver al menú anterior): ")
-			codProd = int(codProd)
-			while buscarCodProd(codProd) == -1 and codProd != 0:
+				codProd = input("Ingrese el código del producto que desea eliminar (Ingrese [0] para volver al menú anterior): ")
+			while buscarCodProd(codProd) == -1 and codProd != "0":
 				print()
 				print("El código del producto ingresado no se encuentra registrado. Inténtelo nuevamente...")
 				print()
@@ -1058,7 +1092,7 @@ def ElimProd():
 				print()
 				pantallaProd()
 				print()
-				codProd = int(input("Ingrese el código del producto que desea eliminar (Ingrese 0 para volver al menú anterior): "))
+				codProd = input("Ingrese el código del producto que desea eliminar (Ingrese [0] para volver al menú anterior): ")
 
 #Módulo correspondiente al menú "Administración". Permite modificar las funciones asociadas a los productos con los que trabaja el comercio.
 """

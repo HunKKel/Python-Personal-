@@ -28,7 +28,7 @@
 #print ("|","MENÚ PRINCIPAL".ljust(tm),"|")
 #print("|".ljust(tm+2,"-"),"|")
 #print ("|"," A - ADMINISTRACIÓN".ljust(tm),"|")
-#print ("|"," B - STOCK".ljust(tm),"|")
+#print ("|"PrecioProducto," B - STOCK".ljust(tm),"|")
 #print("","_".center(tm+2,"_"))
 #-------------------------------------------------------------------------
 
@@ -67,14 +67,14 @@ import string
 tm=50
 class PRODUCTO:
 	def __init__(self):
-		self.cod = "0".rjust(8, "0")
+		self.cod = "0".rjust(4, "0")
 		self.nombre = " ".ljust(12, " ")
 		self.precio = "0.00".rjust(8, "0")
-		self.codProveedor = "0".rjust(4, "0")
-		self.stock = "0".rjust(8, "0")
-		self.cantMax = "0".rjust(8, "0")
-		self.cantMin = "0".rjust(8, "0")
-		self.Estado = True
+		self.codProveedor = "0".rjust(8, "0")
+		self.stock = "0".rjust(4, "0")
+		self.cantMax = "0".rjust(4, "0")
+		self.cantMin = "0".rjust(4, "0")
+		self.Estado = " ".ljust(5, " ")
 
 class PROVEEDOR:
 	def __init__(self):
@@ -85,7 +85,7 @@ class PROVEEDOR:
 		self.ciudad = " ".ljust(20, " ")
 		self.calle = " ".ljust(20, " ")
 		self.numCalle = "0".rjust(4, "0")
-		self.Estado = True
+		self.Estado = " ".ljust(5, " ")
 
 
 #------------------------DECLARACIONES-VARIABLES-SIMPLES---------------------------
@@ -181,7 +181,7 @@ def buscarCodProd(x):
 	while os.path.getsize(afprod) > alprod.tell() and (x != Prod.cod):
 		puntProd = alprod.tell()
 		Prod = pickle.load(alprod)
-	if x == Prod.cod:
+	if x == Prod.cod and Prod.Estado != "False":
 		return puntProd
 	else:
 		return -1
@@ -190,12 +190,33 @@ def buscoProdAlta():
 	if os.path.getsize(afprod) != 0:
 		alprod.seek(0,0)
 		Prod = pickle.load(alprod)
-		while os.path.getsize(afprod) > alprod.tell() and Prod.Estado != True:
+		while os.path.getsize(afprod) > alprod.tell() and Prod.Estado != "True ":
 			Prod = pickle.load(alprod)
-		if Prod.Estado == True:
+		if Prod.Estado == "True ":
 			return 1
 		else:
 			return -1	
+#------------------------------ORDENAMIENTOS---------------------------------------------------------------------------------
+def OrdenarProductos():
+	try:
+		alprod.seek(0,0)
+		prod = pickle.load(alprod)
+		tam = alprod.tell()
+		alprod.seek(0,0)
+		for i in range((os.path.getsize(afprod)//tam)-1):
+			for j in range(i+1,(os.path.getsize(afprod)//tam)-1):
+				alprod.seek(i*tam)
+				prod1 =  pickle.load(alprod) 
+				alprod.seek(j*tam)
+				prod2 =  pickle.load(alprod) 
+				if int(prod1.cod) < int(prod2.cod):
+					alprod.seek(i*tam)
+					pickle.dump(prod2,alprod)
+					alprod.seek(j*tam)
+					pickle.dump(prod1,alprod)
+	except:
+		a = ""
+
 #------------------------------VALIDACIONES----------------------------------------------------------------------------------
 #Este módulo valida que el formato del MAIL sea correscto
 def ValidarMail(mail):
@@ -218,7 +239,31 @@ def ValidarTelefono(tel):
 	else:
 		True
 
-#---------------------------OPCIONES--------------------------------------------------
+def Tamaño(tm):
+	tm = tm-8
+	if tm%4 ==0:
+		b = int(tm//4)
+		a = b+5
+		d = b-5
+		c = b-3
+	elif tm%4 == 1:
+		b = int(tm//4)
+		a = b+5
+		d = b-4
+		c = b-3
+	elif tm%4 == 2:
+		b = int(tm//4)+1
+		a = b+4
+		d = b-5
+		c = b-4
+	else:
+		b = 1+int(tm//4)
+		a = b+4
+		d = b-5
+		c = b-3
+	return a,b,c,d
+
+#------------------------------OPCIONES--------------------------------------------------------------------------------------
 
 #Módulo correspondiente a la variable que ingresa el usuario para elegír la opción a la que quiere ingresar del menú principal
 def opcion():
@@ -280,7 +325,7 @@ def pantallaProv():
 	print("|","Código".center(a),"|","Nombre".center(b),"|")
 	while os.path.getsize(afprov) > alprov.tell():
 		prov = pickle.load(alprov)
-		if prov.Estado == True:
+		if prov.Estado:
 			print("|",prov.cod.center(a),"|",prov.nombre.strip().center(b),"|")
 	print("|","_".center(a,"_"),  "|","_".center(b,"_"),"|")
 
@@ -346,7 +391,7 @@ def AgregarProv():
 				prov.nombre = aux.ljust(12)
 				#hacer validaciones
 				CargaProveedor(prov)
-				prov.Estado = True
+				prov.Estado = "True "
 				prov.cod = str(os.path.getsize(afprov)//tmprov + 2).rjust(4, "0")
 				pickle.dump(prov,alprov)
 				alprov.flush()
@@ -384,7 +429,7 @@ def VerProv():
 		alprov.seek(0)
 		while os.path.getsize(afprov) > alprov.tell():
 			prov = pickle.load(alprov)
-			if prov.Estado:
+			if prov.Estado == "True ":
 				print("|",prov.cod.center(8," "),"|",prov.nombre.strip().center(15," "),"|",prov.mail.strip().center(42," "),"|",prov.telefono.center(12," "),"|")
 		print("|".ljust(90,"_"),"|")
 
@@ -569,8 +614,8 @@ def ElimProv():
 			print("|","_".ljust(tm-2,"_"),"|")
 			input("")
 		elif res=='S':
-			prov.Estado = False
-			alprov.seek(BuscarCodProv(cod))
+			prov.Estado = "False"
+			alprov.seek(BuscarCodProv(cod), 0)
 			pickle.dump(prov,alprov)
 			Borrar()
 			print("","_".ljust(tm,"_"))
@@ -648,22 +693,27 @@ def Proveedores():
 #Módulo en el que se ingresa y valida el precio de un producto. Utilizado en la función "Agregar Producto" del menú "Productos".
 def ingresaPrecioProducto():
 	global precio
+	Borrar()
 	precio = input("Ingrese el precio del producto a registrar (en pesos [ARS]): ")
-	while precio.isdigit()==False:
-		print()
-		print("Error. Ingrese valores numéricos. Inténtelo nuevamente.")
-		print()
-		input("Presione [Enter] para continuar...")
-		Borrar()
-		precio = input("Ingrese el precio del producto a registrar (en pesos [ARS]): ")
-	precio = float(precio)
-	while precio<=0.00:
-		print()
-		print("Error. Ingrese valores mayores que 0.")
-		print()
-		input("Presione [Enter] para continuar...")
-		Borrar()
-		precio = float(input("Ingrese el precio del producto a registrar (en pesos [ARS]): "))
+	band = True
+	while band:
+		if len(precio)>10:
+			Borrar()
+			print("\n Error. Ingrese valores numéricos < 100000 \n Inténtelo nuevamente.")
+			print()
+			input("Presione [Enter] para continuar...")
+			Borrar()
+			precio = input("Ingrese el precio del producto a registrar (en pesos [ARS]): ")
+		else:
+			try:
+				precio = round(float(precio),2)
+				band = False
+			except:
+				Borrar()
+				print("\n Error. Ingrese valores numéricos.\n Inténtelo nuevamente.")
+				input("\n Presione [Enter] para continuar...")
+				Borrar()
+				precio = input("Ingrese el precio del producto a registrar (en pesos [ARS]): ")
 	precio = str(precio)
 	precio = precio.rjust(8, "0")
 
@@ -673,7 +723,7 @@ def ingresaCodigoProveedor():
 	Borrar()
 	pantallaProv()
 	print()
-	print()	
+	print()
 	codProv = input("Ingrese el código del proveedor del producto a registrar: ").rjust(4,"0")
 	while BuscarCodProv(codProv) <= -1:
 		print()
@@ -681,7 +731,8 @@ def ingresaCodigoProveedor():
 		print()
 		input("Presione [Enter] para continuar...")
 		Borrar()
-		pantallaProd()
+		pantallaProv()
+		print()
 		print()
 		codProv = input("Ingrese el código del proveedor del producto a registrar: ").rjust(4,"0")
 	
@@ -717,20 +768,23 @@ def AgregProd():
 				#Si no hay productos ingresados, el código del primer producto será 1.
 				if os.path.getsize(afprod) == 0:
 					codProd = "1"
-					codProd = codProd.rjust(8, "0")
+					codProd = codProd.rjust(4, "0")
 				#Si ya hay 1 o más productos registrados, el sistema otorgará como código el número que le sigue al último producto del registro
 				else:
 					alprod.seek(0,0)
 					Prod = pickle.load(alprod)
 					tamRegProd = alprod.tell()
 					cantRegProd = (os.path.getsize(afprod))//(tamRegProd)
-					puntUltimoProducto = ((cantRegProd)-1)*tamRegProd
-					alprod.seek(puntUltimoProducto, 0)
-					Prod = pickle.load(alprod)
-					Prod.cod = int(Prod.cod)
-					codProd = Prod.cod + 1
+#					puntUltimoProducto = ((cantRegProd)-1)*tamRegProd
+#					alprod.seek(puntUltimoProducto, 0)
+#					Prod = pickle.load(alprod)
+#					Prod.cod = int(Prod.cod)
+#					codProd = Prod.cod + 1
+#					codProd = str(codProd)
+#					codProd = codProd.rjust(4, "0")
+					codProd = cantRegProd + 1
 					codProd = str(codProd)
-					codProd = codProd.rjust(8, "0")
+					codProd = codProd.rjust(4, "0")
 				ingresaPrecioProducto()
 				ingresaCodigoProveedor()
 				alprod.seek(0,2)
@@ -738,7 +792,7 @@ def AgregProd():
 				Prod.nombre = nomProd
 				Prod.precio = precio
 				Prod.codProveedor = codProv
-				Prod.Estado = True
+				Prod.Estado = "True "
 				pickle.dump(Prod, alprod)
 				alprod.flush()
 				print()
@@ -747,7 +801,7 @@ def AgregProd():
 			else:
 				alprod.seek(puntProd, 0)
 				Prod = pickle.load(alprod)
-				if Prod.Estado == False:
+				if Prod.Estado == "False":
 					print()
 					print("El producto fue dado de baja anteriormente. ¿Desea restaurarlo en el sistema?")
 					res = input('(S | N): ')
@@ -767,7 +821,7 @@ def AgregProd():
 						res = input('(S | N): ')
 						res = res.upper()
 					if res == 'S':
-						Prod.Estado = True
+						Prod.Estado = "True "
 						alprod.seek(puntProd, 0)
 						pickle.dump(Prod, alprod)
 						alprod.flush()
@@ -786,6 +840,7 @@ def AgregProd():
 			print()
 			print()
 			Prod = PRODUCTO()
+			OrdenarProductos()
 			nomProd = input("Ingrese el nombre del producto que desea registrar (Máximo 12 caracteres) - (Ingrese [**] para finalizar): ")
 			nomProd = nomProd.ljust(12, " ")
 			nomProd = nomProd.title()
@@ -871,7 +926,7 @@ def pantallaProd():
 	alprod.seek(0,0)
 	while os.path.getsize(afprod) > alprod.tell():
 		Prod = pickle.load(alprod)
-		if Prod.Estado == True:
+		if Prod.Estado == "True ":
 			print()
 			print("Código del Producto: ", Prod.cod)
 			print("Nombre del Producto: ", Prod.nombre)
@@ -935,33 +990,35 @@ def modifProvProd(x):
 
 #Módulo que permite modificar el precio del producto seleccionado.
 def modifPrecioProd(x):
-	Borrar()
-	print("MODIFICACIÓN DEL PRECIO DEL PRODUCTO")
-	print()
-	print()
-	newPrice = input("Ingrese el nuevo precio del producto (En pesos [ARS]) - (Ingrese [0] para finalizar): ")
-	while newPrice.isdigit() == False:
-		print()
-		print("Error. Ingrese valores numéricos...")
-		print()
-		input('Presione [Enter] para continuar...')
+	band = True
+	while band:
 		Borrar()
 		print("MODIFICACIÓN DEL PRECIO DEL PRODUCTO")
 		print()
 		print()
 		newPrice = input("Ingrese el nuevo precio del producto (En pesos [ARS]) - (Ingrese [0] para finalizar): ")
-	newPrice = int(newPrice)
-	while newPrice < 0:
-		print()
-		print("Error. Ingrese valores mayores que 0...")
-		print()
-		input('Presione [Enter] para continuar...')
-		Borrar()
-		print("MODIFICACIÓN DEL PRECIO DEL PRODUCTO")
-		print()
-		print()
-		newPrice = int(input("Ingrese el nuevo precio del producto (En pesos [ARS]) - (Ingrese [0] para finalizar): "))
-	while newPrice != 0:
+		if len(newPrice)>10:
+			Borrar()
+			print("\n Error. Ingrese valores numéricos < 100000 \n Inténtelo nuevamente.")
+			print()
+			input("Presione [Enter] para continuar...")
+		elif newPrice =="0":	
+			band = False
+		else:
+			try:
+				newPrice = round(float(newPrice),2)
+				if newPrice < 0:
+					print()
+					print("Error. Ingrese valores mayores que 0...")
+					print()
+					input('Presione [Enter] para continuar...')
+				else:
+					band = False
+			except:
+				Borrar()
+				print("\n Error. Ingrese valores numéricos. Inténtelo nuevamente.")
+				input("\n Presione [Enter] para continuar...")
+	if newPrice != "0":
 		newPrice = str(newPrice)
 		newPrice = newPrice.rjust(8, "0")
 		print()
@@ -976,8 +1033,6 @@ def modifPrecioProd(x):
 			Borrar()
 			print("MODIFICACIÓN DEL PRECIO DEL PRODUCTO")
 			print()
-			print()
-			print("Ingrese el nuevo precio del producto (En pesos [ARS]) - (Ingrese [0] para finalizar): ", newPrice)
 			print()
 			print("¿Está seguro de que desea modificar el precio del producto [", x.nombre, "] de [", x.precio, "] ARS a [", newPrice, "] ARS?")
 			res = input("(S | N): ")
@@ -994,32 +1049,7 @@ def modifPrecioProd(x):
 			print("Operación cancelada con éxito...")
 		print()
 		input('Presione [Enter] para continuar...')
-		Borrar()
-		print("MODIFICACIÓN DEL PRECIO DEL PRODUCTO")
-		print()
-		print()
-		newPrice = input("Ingrese el nuevo precio del producto (En pesos [ARS]) - (Ingrese [0] para finalizar): ")
-		while newPrice.isdigit() == False:
-			print()
-			print("Error. Ingrese valores numéricos...")
-			print()
-			input('Presione [Enter] para continuar...')
-			Borrar()
-			print("MODIFICACIÓN DEL PRECIO DEL PRODUCTO")
-			print()
-			print()
-			newPrice = input("Ingrese el nuevo precio del producto (En pesos [ARS]) - (Ingrese [0] para finalizar): ")
-		newPrice = int(newPrice)
-		while newPrice < 0:
-			print()
-			print("Error. Ingrese valores mayores que 0...")
-			print()
-			input('Presione [Enter] para continuar...')
-			Borrar()
-			print("MODIFICACIÓN DEL PRECIO DEL PRODUCTO")
-			print()
-			print()
-			newPrice = int(input("Ingrese el nuevo precio del producto (En pesos [ARS]) - (Ingrese [0] para finalizar): "))
+				
 
 #2do Módulo del menú "Productos". Permite modificar los productos registrados en el sistema.
 def ModifProd():
@@ -1069,7 +1099,7 @@ def ModifProd():
 			print()
 			print("1- Nombre del Producto")
 			print()
-			print("2- Proveedor del Produco")
+			print("2- Proveedor del Producto")
 			print()
 			print("3- Precio del Producto")
 			print()
@@ -1090,13 +1120,14 @@ def ModifProd():
 				print()
 				print("1- Nombre del Producto")
 				print()
-				print("2- Proveedor del Produco")
+				print("2- Proveedor del Producto")
 				print()
 				print("3- Precio del Producto")
 				print()
 				print("0- Volver al menú anterior")
 				print()
 				opcion2()
+				OrdenarProductos()
 			Borrar()
 			print("MODIFICAR PRODUCTO")
 			print()
@@ -1190,7 +1221,7 @@ def ElimProd():
 				res = input("(S | N): ")
 				res = res.upper()	
 			if res == 'S':
-				Prod.Estado = True
+				Prod.Estado = "False"
 				alprod.seek(puntProd, 0)
 				pickle.dump(Prod, alprod)
 				alprod.flush()
@@ -1326,11 +1357,133 @@ def Admin():
   	
 #1er Módulo del menú "Stock". Permite visualizar el registro de productos y su respectivo stock. Además, informa si es necesario reponer el stock al llegar a su cantidad mínima.
 def VerStock():
+	Borrar()
+	print("VER STOCK")
 	print()
+	print()	
+	a,b,c,d=Tamaño(tm)
+	alprod.seek(0,0)
+	print("|".ljust(tm," "),"|")
+	print("|".ljust(tm,"-"),"|")
+	print("|".ljust(tm," "),"|")
+	print("|","Producto".center(a),"|","Precio".center(b),"|","Cantidad".center(c),"|")
+	while os.path.getsize(afprod) > alprod.tell():
+		prod = pickle.load(alprod)
+		if prod.Estado == "True ":
+			if int(prod.stock)<int(prod.cantMin):
+				reponer =  str(int(prod.cantMax)-int(prod.stock))
+			else:
+				reponer = "NO"
+			print("|",prod.nombre.strip().center(a),"|",prod.precio.strip('0').center(b),"|",prod.stock.strip('0').center(c),"|",reponer.center(d),"|")
+	print("|","_".center(a,"_"),  "|","_".center(b,"_"),"|","_".center(c,"_"),"|","_".center(d,"_"),"|")
+	print()
+	print()
+	input("Presione [Enter] para volver...")
 
 #2do Módulo del menú "Stock". Permite incrementar el stock de los productos registrados en el sistema.
 def AgregarStock():
+	Borrar()
+	print("AGREGAR STOCK")
 	print()
+	print()
+	pantallaProd()
+	print()
+	codProd = input("Ingrese el código del producto al que desea incrementarle el stock (Ingrese [0] para finalizar): ")
+	while codProd.isdigit()	== False:
+		print()
+		print("Error. No ingrese letras ni caracteres.")
+		print()
+		input('Presione [Enter] para continuar...')
+		Borrar()
+		print("AGREGAR STOCK")
+		print()
+		print()
+		pantallaProd()
+		print()
+		codProd = input("Ingrese el código del producto al que desea incrementarle el stock (Ingrese [0] para finalizar): ")
+	while buscarCodProd(codProd) == -1 and codProd != "0":
+		print()
+		print("El código de producto ingresado no se encuentra registrado en el sistema. Inténtelo nuevamente.")
+		print()
+		input('Presione [Enter] para continuar...')
+		Borrar()
+		print("AGREGAR STOCK")
+		print()
+		print()
+		pantallaProd()
+		print()
+		codProd = input("Ingrese el código del producto al que desea incrementarle el stock (Ingrese [0] para finalizar): ")
+	while codProd != "0":
+		Borrar()
+		print("AGREGAR STOCK")
+		print()
+		print()
+		newStock = input("Ingrese la cantidad del producto que desea agregar al stock: ")
+		while newStock.isdigit() == False:
+			print()
+			print("Error. No ingrese letras ni caracteres.")
+			print()
+			input('Presione [Enter] para continuar...')
+			Borrar()
+			print("AGREGAR STOCK")
+			print()
+			print()
+			newStock = input("Ingrese la cantidad del producto que desea agregar al stock: ")
+		newStock = int(newStock)
+		while newStock < 1:
+			print()
+			print("Error. Ingrese valores mayores que 0.")
+			print()
+			input('Presione [Enter] para continuar...')
+			Borrar()
+			print("AGREGAR STOCK")
+			print()
+			print()
+			newStock = int(input("Ingrese la cantidad del producto que desea agregar al stock: "))
+		alprod.seek(puntProd, 0)
+		Prod = pickle.load(alprod)
+		Prod.stock = int(Prod.stock)
+		Prod.stock += newStock
+		Prod.stock = str(Prod.stock)
+		Prod.stock = Prod.stock.rjust(4, "0")
+		alprod.seek(puntProd, 0)
+		pickle.dump(Prod, alprod)
+		alprod.flush()
+		print()
+		print("Stock del producto [", Prod.nombre, "] incrementado con éxito. El total actual es: ", Prod.stock, ".")
+		print()
+		input('Presione [Enter] para continuar...')
+		Borrar()
+		print("AGREGAR STOCK")
+		print()
+		print()
+		pantallaProd()
+		print()
+		codProd = input("Ingrese el código del producto al que desea incrementarle el stock (Ingrese [0] para finalizar): ")
+		while codProd.isdigit()	== False:
+			print()
+			print("Error. No ingrese letras ni caracteres.")
+			print()
+			input('Presione [Enter] para continuar...')
+			Borrar()
+			print("AGREGAR STOCK")
+			print()
+			print()
+			pantallaProd()
+			print()
+			codProd = input("Ingrese el código del producto al que desea incrementarle el stock (Ingrese [0] para finalizar): ")
+		while buscarCodProd(codProd) == -1 and codProd != "0":
+			print()
+			print("El código de producto ingresado no se encuentra registrado en el sistema. Inténtelo nuevamente.")
+			print()
+			input('Presione [Enter] para continuar...')
+			Borrar()
+			print("AGREGAR STOCK")
+			print()
+			print()
+			pantallaProd()
+			print()
+			codProd = input("Ingrese el código del producto al que desea incrementarle el stock (Ingrese [0] para finalizar): ")
 
 #2do Módulo del menú principa del programa. Permite al usuario modificar y visualizar el stock asociado a sus productos.
 def Stock():
